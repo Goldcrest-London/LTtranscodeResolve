@@ -272,6 +272,7 @@ def LTtranscode():
 	global TranscodePath
 	global logFile
 	global proj
+	global renderjob
 
 	try:
 		# create new timeline with the timelineName name if it doesn't exit
@@ -416,8 +417,13 @@ dayUnit = shootDay[5:9]
 LTtranscode()
 # loop until the transcoding is completed
 while proj.IsRenderingInProgress():
-	print('.', end='')
-	time.sleep(1)
+	stat=proj.GetRenderJobStatus(renderjob)
+	# 'JobStatus': 'Rendering', 'CompletionPercentage': 86, 'EstimatedTimeRemainingInMs': 0}
+	print("\r",bcolors.CYAN,stat['JobStatus'],"   ",stat['CompletionPercentage'],"%  ",bcolors.ENDC,end='')
+	if "EstimatedTimeRemainingInMs" in stat:
+		print(bcolors.CYAN,"Remaining : ",stat['EstimatedTimeRemainingInMs']/1000,"sec",bcolors.ENDC,end='')
+print("\r",bcolors.CYAN,stat['JobStatus'],"   ",100,"%  ",bcolors.ENDC,end='')
+print(bcolors.CYAN,"Remaining : ",0,"sec",bcolors.ENDC,end='')
 print("")
 LTprint("INFO : Transcoding completed...")
 LTprint("INFO : Copy non OCF files...")
