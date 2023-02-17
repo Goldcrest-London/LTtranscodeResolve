@@ -41,6 +41,7 @@ from os.path 			import exists
 from pathlib 			import Path
 from csv 				import reader
 from csv 				import DictReader
+from shutil 			import copytree, ignore_patterns
 
 #import pathlib
 import re
@@ -110,7 +111,14 @@ def LTcheckArgs( argv ):
 		print("TranscodeResolve look at a specific path and if it sees new media then it will transcode each camroll")
 		print("Resolve needs to be already running on the database where the predefine project already exist")
 		print("It will automatically create the media bin structure as well as timelines and render transcoded media onto the defined path")
-		print("")
+		print("-----------------------------------------------------------------------------------------------------------------------------------------------------------------")
+		print("PLEASE MAKE SURE THE CREATE THE RESOLVE PROJECT FIRST AND THE RENDER PRESET NAMES 'transcode'")
+		print("THE RENDER PRESET NEENDS TO BE SETUP WITH THE FOLLOWING OPTIONS")
+		print("- Filename : Source name ")
+		print("- Location : The transcoded media folder")
+		print("- Render Individual clips")
+		print("- Render at source resolution")
+		print("- Preserve directory levels set accordingly")
 		print("-----------------------------------------------------------------------------------------------------------------------------------------------------------------")
 		print("")
 		print("To run the script on Mac for the TranscodeResolve project and '/Volumes/NVME' lookup Path, Rendering in '/Volumes/SPARK/Transcoded'")
@@ -254,7 +262,6 @@ def LTcreateNewShootDay():
 	else:
 		dayBin=mediapool.AddSubFolder(blockfolder,dayUnit)
 	
-
 # ----------------------------- #
 
 def LTtranscode():
@@ -298,6 +305,30 @@ def LTtranscode():
 	except:
 		LTprint("ERROR : Can't create the bins for "+dayBlock+" / "+dayUnit);		
 	
+# ----------------------------- #
+
+def LTcopyNonOCFfiles():
+	# this needs to be doe after the transcode is completed because the path for the transcode is set within the resolve reder preset
+	# The script doesn't know the exact organisation of the folder structure
+	global TranscodePath
+	global OCFfolder
+	#find the OCF transcoded folder
+	OCFTfolder=''
+	srcFolder, tail = os.path.split(OCFfolder)
+	# r=root, d=directories, f = files
+	for r, dirs, files in os.walk(TranscodePath):
+		for dir in dirs:
+			if 'OCF' in dir:
+				OCFTfolder=os.path.join(r, dir)
+	if (OCFTfolder==''):
+		LTprint("ERROR: Can't find an OCF folder on the Transcoded media paths...")
+		return
+	else:
+		dstFolder, tail = os.path.split(OCFTfolder)
+		LTprint("INFO : Copy all non OCF files and folders from "+srcFolder+" to "+dstFolder)
+		copytree(srcFolder, dstFolder, ignore=ignore_patterns('*OCF*'),dirs_exist_ok=True)
+
+	
 
 
 #*******************************************************************************************************
@@ -335,7 +366,9 @@ LTprint(bcolors.BOLD+"TranscodeResolve version "+version+" (c)2023 LT for Goldcr
 LTprint(bcolors.BOLD+"----------------------------------------------------------------------------------------------"+bcolors.ENDC)
 
 try:
+	LTprint("Connecting to Resolve...")
 	resolve = GetResolve()
+	#print(resolve)
 	projMgr = resolve.GetProjectManager()
 except:
 	LTprint("ERROR : Not able to connect to the Resolve API. Please make sure the Resolve software is running...")
@@ -387,6 +420,8 @@ while proj.IsRenderingInProgress():
 	time.sleep(1)
 print("")
 LTprint("INFO : Transcoding completed...")
+LTprint("INFO : Copy non OCF files...")
+LTcopyNonOCFfiles()
 #******************************************************************
 LTprint("")
 LTprint("INFO : Save Project "+ProjName+"...")
