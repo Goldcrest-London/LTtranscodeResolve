@@ -23,9 +23,9 @@ elif sys.platform.startswith("linux"):
 	print("Linux platform detected...")
 	print("")
 	#if Linux
-	os.environ["RESOLVE_SCRIPT_API"]="/opt/resolve/versions/studio_18.1.2/Developer/Scripting"
-	os.environ["RESOLVE_SCRIPT_LIB"]="/opt/resolve/versions/studio_18.1.2/libs/Fusion/fusionscript.so"
-	os.environ["PYTHONPATH"]		="/opt/resolve/versions/studio_18.1.2/Developer/Scripting/Modules/"
+	os.environ["RESOLVE_SCRIPT_API"]="/home/ltreherne/Documents/Programming/Resolve_scripts"
+	os.environ["RESOLVE_SCRIPT_LIB"]="/opt/resolve/libs/Fusion/fusionscript.so"
+	os.environ["PYTHONPATH"]		="/home/ltreherne/Documents/Programming/Resolve_scripts/Modules/"
 
 print('Environment variables set to:')
 print(os.environ['RESOLVE_SCRIPT_API'])
@@ -310,7 +310,7 @@ mountPoint="/Volumes/"
 if sys.platform.startswith("darwin"):
 	resolveRootPath = "/Library/Application Support/Blackmagic Design/DaVinci Resolve"
 else:
-	resolveRootPath = "/opt/resolve/versions/studio_18.1.2"
+	resolveRootPath = "/opt/resolve"
 
 option = LTcheckArgs(sys.argv)
 if option == 0:
