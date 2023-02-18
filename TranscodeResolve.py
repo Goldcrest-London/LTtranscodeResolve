@@ -204,37 +204,40 @@ def LTisLookupFolderValid(folder):
 	# check if the Lookup folder has a subfolder looking like BK01_MU01_20220517 with a num empyy OCF subfolde
 	# a valid folder structure would be [lookupFolder]/[projectName]/[ShootDate]/OCF
 	mypath=''
-	listDir=[os.path.join(LookupPath, o) for o in os.listdir(LookupPath) if os.path.isdir(os.path.join(LookupPath,o))]
-	if listDir==[]:
+	if not os.path.exists(folder):
 		return 0
 	else:
-		if len(listDir)>1:
-			LTprint("ERROR : The Lookup folder has more than one [Project] Folder")
-			return -1
+		listDir=[os.path.join(LookupPath, o) for o in os.listdir(LookupPath) if os.path.isdir(os.path.join(LookupPath,o))]
+		if listDir==[]:
+			return 0
 		else:
-			# go to the project folder
-			mypath=os.path.join(LookupPath,listDir[0])
-			listDir=[os.path.join(mypath, o) for o in os.listdir(mypath) if os.path.isdir(os.path.join(mypath,o))]
 			if len(listDir)>1:
-				LTprint("ERROR : The Project folder has more than one [shootday] Folder")
+				LTprint("ERROR : The Lookup folder has more than one [Project] Folder")
 				return -1
 			else:
-				if not re.search("[a-zA-Z0-9]{4}_[a-zA-Z0-9]{4}_[0-9]{8}$", listDir[0]):
-					LTprint("ERROR : The Shoot Day folder name is not correct. We are expecting something like BK01_MU01_20220517")
-					return -1
+				# go to the project folder
+				mypath=os.path.join(LookupPath,listDir[0])
+				listDir=[os.path.join(mypath, o) for o in os.listdir(mypath) if os.path.isdir(os.path.join(mypath,o))]
+				if len(listDir)>1:
+					LTprint("ERROR : The Project folder has more than one [shootday] Folder")
+					return -1		
 				else:
-					shootDay = os.path.basename(os.path.normpath(listDir[0]))
-					mypath = os.path.join(mypath,listDir[0])
-					listDir = os.listdir(mypath)
-					findOCF = False
-					for dir in listDir:
-						if dir=="OCF":
-							findOCF = True
-							mypath = os.path.join(mypath,dir)
-					if findOCF==True:
-						return mypath
-					else:
+					if not re.search("[a-zA-Z0-9]{4}_[a-zA-Z0-9]{4}_[0-9]{8}$", listDir[0]):
+						LTprint("ERROR : The Shoot Day folder name is not correct. We are expecting something like BK01_MU01_20220517")
 						return -1
+					else:
+						shootDay = os.path.basename(os.path.normpath(listDir[0]))
+						mypath = os.path.join(mypath,listDir[0])
+						listDir = os.listdir(mypath)
+						findOCF = False
+						for dir in listDir:
+							if dir=="OCF":
+								findOCF = True
+								mypath = os.path.join(mypath,dir)
+						if findOCF==True:
+							return mypath
+						else:
+							return -1
 
 
 
