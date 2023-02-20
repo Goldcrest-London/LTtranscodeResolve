@@ -207,7 +207,8 @@ def LTisLookupFolderValid(folder):
 	if not os.path.exists(folder):
 		return 0
 	else:
-		listDir=[os.path.join(LookupPath, o) for o in os.listdir(LookupPath) if os.path.isdir(os.path.join(LookupPath,o))]
+		listDir=[os.path.join(LookupPath, o) for o in os.listdir(LookupPath) if (os.path.isdir(os.path.join(LookupPath,o)) and (os.path.basename(o)[0]!='.'))]
+		#print(listDir)
 		if listDir==[]:
 			return 0
 		else:
@@ -223,7 +224,7 @@ def LTisLookupFolderValid(folder):
 					return -1		
 				else:
 					if not re.search("[a-zA-Z0-9]{4}_[a-zA-Z0-9]{4}_[0-9]{8}$", listDir[0]):
-						LTprint("ERROR : The Shoot Day folder name is not correct. We are expecting something like BK01_MU01_20220517")
+						LTprint("ERROR : The Shoot Day '"+listDir[0]+"'folder name is not correct. We are expecting something like BK01_MU01_20220517")
 						return -1
 					else:
 						shootDay = os.path.basename(os.path.normpath(listDir[0]))
@@ -400,7 +401,7 @@ LTprint("")
 starttime = time.time()
 filesInLookup=False
 LTprint("INFO : Checking lookup folder "+LookupPath+" for files...")
-LTprint(bcolors.GREEN+"       Process will start as soon as the media will be accessible"+bcolors.ENDC)
+LTprint(bcolors.YELLOW+"       Process will start as soon as the media will be accessible"+bcolors.ENDC)
 LTprint("")
 while not filesInLookup:
 	ret=LTisLookupFolderValid(LookupPath)
