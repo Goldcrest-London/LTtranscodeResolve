@@ -113,25 +113,27 @@ def LTsendEmail(subject,message):
 
 def LTcheckArgs( argv ):
 	#LTprint(len(argv))
-	if len(argv)<3:
-		print("")
-		print("=================================================================================================================================================================")
-		print("")
-		print("Usage : python3 "+argv[0]+" [Lookup Path] [Copy Path]")
-		print("")
-		print("-----------------------------------------------------------------------------------------------------------------------------------------------------------------")
-		print("")
-		print("LookupFilesPull look at a specific path and if it sees new files then it will copy each them on a Copy Path")
-		print("-----------------------------------------------------------------------------------------------------------------------------------------------------------------")
-		print("")
-		print("NOTE: PLEASE DO NOT USE ANY SPECIAL CHARCTERES INCLUDING SPACES ON FOLDERS OR FILE NAMES")
-		print("=================================================================================================================================================================")
-		print("")
-		print("")
-		print("")
-		return 0
-	else:
-		return 1
+    if len(argv)<3:
+        print("")
+        print("=================================================================================================================================================================")
+        print("")
+        print("Usage : python3 "+argv[0]+" [Lookup Path] [Copy Path]")
+        print("")
+        print("-----------------------------------------------------------------------------------------------------------------------------------------------------------------")
+        print("")
+        print("LookupFilesPull look at a specific path and if it sees new files then it will copy each them on a Copy Path")
+        print("-----------------------------------------------------------------------------------------------------------------------------------------------------------------")
+        print("")
+        print("NOTE: PLEASE DO NOT USE ANY SPECIAL CHARACTERES INCLUDING SPACES ON FOLDERS OR FILE NAMES")
+        print("      THE SCRIPT WILL NOT REMOVE ANY FILE FROM THE DESTINATION PATH EVEN IF YOU REMOVE THEN FROM THE SOURCE PATH")
+        print("      RESTART THE SCRIPT EVERY TIME YOU WANT TO INITIATE A NEW TRANSFER")
+        print("=================================================================================================================================================================")
+        print("")
+        print("")
+        print("")
+        return 0
+    else:
+        return 1
 
 # ----------------------------- #
 

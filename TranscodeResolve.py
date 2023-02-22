@@ -275,13 +275,13 @@ def LTcreateNewShootDay():
 	global dayUnit
 	global dayBin
 	
-	LTprint("INFO : Create ShootDay Bins for block "+dayBlock+" / "+dayUnit)
+	LTprint("INFO  : Create ShootDay Bins for block "+dayBlock+" / "+dayUnit)
 	rootfolder=mediapool.GetRootFolder()
 	# Create the Block Bin if not exit
 	folderList = rootfolder.GetSubFolderList()
 	tmpFolder = LTisFolderExist(folderList,dayBlock)
 	if tmpFolder!="None":
-		LTprint("INFO : "+dayBlock+" Bin already exist")
+		LTprint("INFO  : "+dayBlock+" Bin already exist")
 		blockfolder=tmpFolder
 	else:
 		blockfolder=mediapool.AddSubFolder(rootfolder,dayBlock)
@@ -289,7 +289,7 @@ def LTcreateNewShootDay():
 	folderList = blockfolder.GetSubFolderList()
 	tmpFolder = LTisFolderExist(folderList,dayUnit)
 	if tmpFolder!="None":
-		LTprint("INFO : "+dayUnit+" Bin already exist")
+		LTprint("INFO  : "+dayUnit+" Bin already exist")
 		dayBin=tmpFolder
 	else:
 		dayBin=mediapool.AddSubFolder(blockfolder,dayUnit)
@@ -313,22 +313,22 @@ def LTtranscode():
 		# create new timeline with the timelineName name if it doesn't exit
 		mediapool.SetCurrentFolder(dayBin)
 		try:
-			LTprint("INFO : Load clips onto the mediapool...")
+			LTprint("INFO  : Load clips onto the mediapool...")
 			myclips=mediastorage.AddItemListToMediaPool(OCFfolder)
 			# add all the clips on a new timeline
-			LTprint("INFO : Create Timeline...")
+			LTprint("INFO  : Create Timeline...")
 			mytimeline=mediapool.CreateTimelineFromClips('Timeline_'+dayBlock+'_'+dayUnit,myclips)
 			# create render queue
 			proj.DeleteAllRenderJobs()
-			LTprint("INFO : Load Transcode render preset...")
+			LTprint("INFO  : Load Transcode render preset...")
 			if not proj.LoadRenderPreset("transcode"):
 				LTprint("ERROR  : Can't find any preset called 'transcode'. Please check your Resolve project...")
 			try:
 				# force path to preserve the 
-				LTprint("INFO : Create Render job...")
+				LTprint("INFO  : Create Render job...")
 				renderjob=proj.AddRenderJob()
 				proj.StartRendering(renderjob)
-				LTprint("INFO : Start rendering...")
+				LTprint("INFO  : Start rendering...")
 			except:
 				LTprint("ERROR  : Rendering failed...")
 		except:
@@ -354,15 +354,15 @@ def LTcopyNonOCFfiles():
 			if 'OCF' in dir:
 				OCFTfolder=os.path.join(r, dir)
 	if (OCFTfolder==''):
-		LTprint("ERROR: Can't find an OCF folder on the Transcoded media paths...")
+		LTprint("ERROR : Can't find an OCF folder on the Transcoded media paths...")
 		return
 	else:
 		dstFolder, tail = os.path.split(OCFTfolder)
-		LTprint("INFO : Copy all non OCF files and folders from "+srcFolder+" to "+dstFolder)
+		LTprint("INFO  : Copy all non OCF files and folders from "+srcFolder+" to "+dstFolder)
 		try:
 			copytree(srcFolder, dstFolder, ignore=ignore_patterns('*OCF*'),dirs_exist_ok=True)
 		except:
-			LTprint('ERROR: copying the non OCF files')
+			LTprint('ERROR : copying the non OCF files')
 
 	
 
@@ -413,22 +413,22 @@ if proj == None:
 	LTprint("ERROR : The Resolve project "+ProjName+" Does not exist")
 	exit()
 else:
-	LTprint("INFO : The resolve project "+ProjName+" is now selected...")
+	LTprint("INFO  : The resolve project "+ProjName+" is now selected...")
 
 mediapool=proj.GetMediaPool()
 mediastorage=resolve.GetMediaStorage()
 dayfolder=mediapool.GetRootFolder()
 timelinefolder=mediapool.GetRootFolder()
 LTprint("")
-LTprint("INFO : The Lookup path is defined as     : "+LookupPath)
-LTprint("INFO : The Transcoded path is defined as : "+TranscodePath)
+LTprint("INFO  : The Lookup path is defined as     : "+LookupPath)
+LTprint("INFO  : The Transcoded path is defined as : "+TranscodePath)
 LTprint("")
 
 #******************************************************************
 # loop until new media is available on the lookup folder
 starttime = time.time()
 filesInLookup=False
-LTprint("INFO : Checking lookup folder "+LookupPath+" for files...")
+LTprint("INFO  : Checking lookup folder "+LookupPath+" for files...")
 LTprint(bcolors.YELLOW+"       Process will start as soon as the media will be accessible"+bcolors.ENDC)
 LTprint("")
 while not filesInLookup:
@@ -442,7 +442,7 @@ while not filesInLookup:
 		else:
 			time.sleep(10.0 - ((time.time() - starttime) % 10.0))
 
-LTprint("INFO : Begining Transcoding the folder "+OCFfolder+" for shoot day "+shootDay)
+LTprint("INFO  : Begining Transcoding the folder "+OCFfolder+" for shoot day "+shootDay)
 dayBlock = shootDay[0:4]
 dayUnit = shootDay[5:9]
 #******************************************************************
@@ -471,15 +471,15 @@ while proj.IsRenderingInProgress():
 print("\r",bcolors.CYAN,stat['JobStatus'],"   ",100,"%  ",bcolors.ENDC,end='')
 print(bcolors.CYAN,"Remaining : ",0,"sec",bcolors.ENDC,end='')
 print("")
-LTprint("INFO : Transcoding completed...")
+LTprint("INFO  : Transcoding completed...")
 #******************************************************************
-LTprint("INFO : Copy non OCF files...")
+LTprint("INFO  : Copy non OCF files...")
 LTcopyNonOCFfiles()
 #******************************************************************
 LTprint("")
-LTprint("INFO : Save Project "+ProjName+"...")
+LTprint("INFO  : Save Project "+ProjName+"...")
 projMgr.SaveProject()
-LTprint("INFO : Process completed...")
+LTprint("INFO  : Process completed...")
 message = "<h2>Processing completed...</h2><br><br>"
 LTsendEmail('TranscodeResolve Process...',message)
 logFile.close()
