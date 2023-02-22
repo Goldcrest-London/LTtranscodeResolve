@@ -18,13 +18,15 @@ def GetResolve():
             import os
             expectedPath=os.getenv('PROGRAMDATA') + "\\Blackmagic Design\\DaVinci Resolve\\Support\\Developer\\Scripting\\Modules\\"
         elif sys.platform.startswith("linux"):
-            expectedPath="/opt/resolve/versions/studio_17.1b10/libs/Fusion/libs/Fusion/Modules/"
+            expectedPath="./"
 
         # check if the default path has it...
         print("Unable to find module DaVinciResolveScript from $PYTHONPATH - trying default locations")
         try:
             import imp
+            print("loading module "+expectedPath+"DaVinciResolveScript.py")
             bmd = imp.load_source('DaVinciResolveScript', expectedPath+"DaVinciResolveScript.py")
+            print("Loading module DaVinciResolveScript done...")
         except ImportError:
             # No fallbacks ... report error:
             print("Unable to find module DaVinciResolveScript - please ensure that the module DaVinciResolveScript is discoverable by python")
