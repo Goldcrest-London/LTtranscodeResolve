@@ -145,9 +145,12 @@ def LTbuildFileList(path):
         for file in files:
             filePath=os.path.join(path, file)
             if filePath in fileList:
+                # check if the file has already been transfered and locked
+                # if not locked then update the value in the dict
                 if (fileList[filePath]!=-1):
                     fileList[filePath]=os.stat(filePath).st_size
             else:
+                # create a new entry on the array for the file
                 fileList[filePath]=os.stat(filePath).st_size
 
 # ----------------------------- #
