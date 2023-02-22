@@ -8,6 +8,26 @@ See Usage for more details
 
 import os
 import sys
+from python_get_resolve 	import GetResolve
+from os.path 				import exists
+from pathlib 				import Path
+from shutil 				import copytree, ignore_patterns
+from email.mime.text 		import MIMEText
+from email.mime.multipart 	import MIMEMultipart
+
+import re
+import datetime
+import xml.etree.ElementTree as ET
+import time
+import smtplib
+
+
+
+#********************************************************
+version="1.3"
+mountPoint="/Volumes/"
+emailReceivers = ['ltreherne@goldcrestfilms.com']
+#********************************************************
 
 os.system('clear')
 print("")
@@ -24,7 +44,7 @@ elif sys.platform.startswith("linux"):
 	print("")
 	#if Linux
 	os.environ["RESOLVE_SCRIPT_API"]="/home/ltreherne/Documents/Programming/Resolve_scripts"
-	os.environ["RESOLVE_SCRIPT_LIB"]="/opt/resolve/libs/Fusion/fusionscript.so"
+	os.environ["RESOLVE_SCRIPT_LIB"]="/opt/resolve/versions/studio_18.1.2/libs/Fusion/fusionscript.so"
 	os.environ["PYTHONPATH"]		="/home/ltreherne/Documents/Programming/Resolve_scripts/Modules/"
 
 print('Environment variables set to:')
@@ -35,20 +55,6 @@ print(os.environ['PYTHONPATH'])
 #print(os.environ)
 #print("")
 #print(sys.path)
-
-from python_get_resolve import GetResolve
-from os.path 			import exists
-from pathlib 			import Path
-from csv 				import reader
-from csv 				import DictReader
-from shutil 			import copytree, ignore_patterns
-
-#import pathlib
-import re
-import datetime
-#import difflib
-import xml.etree.ElementTree as ET
-import time
 
 class bcolors:
 	NORMAL	=	'\033[37m'
@@ -71,6 +77,8 @@ def LTprint(str):
 		c=bcolors.MAGENTA
 	elif str.startswith('ERROR'):
 		c=bcolors.RED
+		# also send email
+		LTsendEmail('TranscodeResolve Process ERROR...','<h2 style="color:red;">'+str+'</h2>')
 	elif str.startswith('INFO'):
 		c=bcolors.GREEN
 	else:
@@ -79,6 +87,26 @@ def LTprint(str):
 	now = datetime.datetime.now()
 	date_time = now.strftime("%m/%d/%Y, %H:%M:%S")
 	logFile.write(date_time+" "+str+"\n")
+
+# ----------------------------- #
+
+def LTsendEmail(subject,message):
+	sender = 'TranscodeResolve'
+	global emailReceivers
+
+	msg = MIMEMultipart('alternative')
+	msg['Subject'] = 'TranscodeResolve ( '+ProjName+' / '+shootDay+' )'
+	msg['From'] = 'TranscodeResolve@goldcrestfilms.com'
+	msg['To'] = 'undisclosed recipients'
+	msg.attach(MIMEText(message, 'html'))
+	server = smtplib.SMTP("10.71.3.251")
+	try:
+		server.sendmail(sender, emailReceivers,  msg.as_string())
+		LTprint('INFO  : sending email')
+	except Exception as e:
+		LTprint('ERROR : sending email')
+	finally:
+		server.quit()
 
 # ----------------------------- #
 
@@ -313,7 +341,7 @@ def LTtranscode():
 # ----------------------------- #
 
 def LTcopyNonOCFfiles():
-	# this needs to be doe after the transcode is completed because the path for the transcode is set within the resolve reder preset
+	# this needs to be done after the transcode is completed because the path for the transcode is set within the resolve render preset
 	# The script doesn't know the exact organisation of the folder structure
 	global TranscodePath
 	global OCFfolder
@@ -331,7 +359,10 @@ def LTcopyNonOCFfiles():
 	else:
 		dstFolder, tail = os.path.split(OCFTfolder)
 		LTprint("INFO : Copy all non OCF files and folders from "+srcFolder+" to "+dstFolder)
-		copytree(srcFolder, dstFolder, ignore=ignore_patterns('*OCF*'),dirs_exist_ok=True)
+		try:
+			copytree(srcFolder, dstFolder, ignore=ignore_patterns('*OCF*'),dirs_exist_ok=True)
+		except:
+			LTprint('ERROR: copying the non OCF files')
 
 	
 
@@ -339,9 +370,6 @@ def LTcopyNonOCFfiles():
 #*******************************************************************************************************
 # Main 
 #*******************************************************************************************************
-
-version="1.1"
-mountPoint="/Volumes/"
 
 if sys.platform.startswith("darwin"):
 	resolveRootPath = "/Library/Application Support/Blackmagic Design/DaVinci Resolve"
@@ -360,7 +388,7 @@ rootPath = os.path.dirname(sys.argv[1])
 LookupPath = sys.argv[1]
 TranscodePath = sys.argv[2]
 ProjName = sys.argv[3]
-logPath = TranscodePath+"/Silverstack2Resolve.log"
+logPath = TranscodePath+"/TranscodeResolve.log"
 logFile = open(logPath,"a")
 shootDay = ''
 dayBlock = ''
@@ -373,7 +401,6 @@ LTprint(bcolors.BOLD+"----------------------------------------------------------
 try:
 	LTprint("Connecting to Resolve...")
 	resolve = GetResolve()
-	#print(resolve)
 	projMgr = resolve.GetProjectManager()
 except:
 	LTprint("ERROR : Not able to connect to the Resolve API. Please make sure the Resolve software is running...")
@@ -397,6 +424,7 @@ LTprint("INFO : The Lookup path is defined as     : "+LookupPath)
 LTprint("INFO : The Transcoded path is defined as : "+TranscodePath)
 LTprint("")
 
+#******************************************************************
 # loop until new media is available on the lookup folder
 starttime = time.time()
 filesInLookup=False
@@ -418,6 +446,20 @@ LTprint("INFO : Begining Transcoding the folder "+OCFfolder+" for shoot day "+sh
 dayBlock = shootDay[0:4]
 dayUnit = shootDay[5:9]
 #******************************************************************
+# create the list of file to process including metadata and media files
+fileList = {}
+for path, currentDirectory, files in os.walk(LookupPath):
+	for file in files:
+		filePath=os.path.join(path, file)
+		fileList[filePath]=os.stat(filePath).st_size
+message = "<h2>Please find list of files about to be copied or transcoded...</h2><br><br>"
+for keys,values in fileList.items():
+	print(keys,values)
+	message=message+'<div>'+keys+'</div>'
+# send email notification
+LTsendEmail('TranscodeResolve Process...',message)
+#******************************************************************
+# transcode media
 LTtranscode()
 # loop until the transcoding is completed
 while proj.IsRenderingInProgress():
@@ -430,6 +472,7 @@ print("\r",bcolors.CYAN,stat['JobStatus'],"   ",100,"%  ",bcolors.ENDC,end='')
 print(bcolors.CYAN,"Remaining : ",0,"sec",bcolors.ENDC,end='')
 print("")
 LTprint("INFO : Transcoding completed...")
+#******************************************************************
 LTprint("INFO : Copy non OCF files...")
 LTcopyNonOCFfiles()
 #******************************************************************
@@ -437,5 +480,7 @@ LTprint("")
 LTprint("INFO : Save Project "+ProjName+"...")
 projMgr.SaveProject()
 LTprint("INFO : Process completed...")
+message = "<h2>Processing completed...</h2><br><br>"
+LTsendEmail('TranscodeResolve Process...',message)
 logFile.close()
 
