@@ -25,7 +25,6 @@ import smtplib
 
 #********************************************************
 version="1.6"
-mountName="AGIM_TRANSPORT"				# This is the begining of the NVME drives
 # The script will look at something called /[Lookup Path]/[mountName]* to start the transfer 
 emailReceivers = ['ltreherne@goldcrestfilms.com']
 #********************************************************
@@ -134,7 +133,9 @@ def LTcheckArgs( argv ):
 		print("")
 		print("=================================================================================================================================================================")
 		print("")
-		print("Usage : python3 "+argv[0]+" [Lookup Path] [Transcoded Media Path] [Existing Resolve Project Name]")
+		print("Usage : python3 "+argv[0]+" [Lookup Path for the mount point] [Transcoded Media Path] [Existing Resolve Project Name]")
+		print("        python3 "+argv[0]+" /Volumes/AGIM_TRANSPORT /Sparks/AGIM/Transcoded AGIM_transcode")
+		print("        This will trigger the transcode as soon as a folder started by '/Volumes/AGIM_TRANSPORT'... has been detected on the server")
 		print("")
 		print("-----------------------------------------------------------------------------------------------------------------------------------------------------------------")
 		print("")
@@ -404,7 +405,8 @@ if option == 0:
 if sys.argv[1][-1] != '/':
 	sys.argv[1]+='/'
 rootPath = os.path.dirname(sys.argv[1])
-LookupPath = sys.argv[1]
+LookupPath = os.path.split(os.path.dirname(sys.argv[1]))[0]
+mountName = os.path.split(os.path.dirname(sys.argv[1]))[1]
 TranscodePath = sys.argv[2]
 ProjName = sys.argv[3]
 logPath = TranscodePath+"/TranscodeResolve.log"
@@ -440,7 +442,7 @@ dayfolder=mediapool.GetRootFolder()
 timelinefolder=mediapool.GetRootFolder()
 LTprint("")
 LTprint("INFO  : The mounted drive name is expected to start with : "+mountName+"...")
-LTprint("INFO  : The Lookup path is defined as                    : "+LookupPath)
+LTprint("INFO  : The Mounted path is defined as                   : "+LookupPath)
 LTprint("INFO  : The Transcoded path is defined as                : "+TranscodePath)
 LTprint("")
 
