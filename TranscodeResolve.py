@@ -24,8 +24,9 @@ import smtplib
 
 
 #********************************************************
-version="1.3"
-mountPoint="/Volumes/"
+version="1.6"
+mountName="AGIM_TRANSPORT"				# This is the begining of the NVME drives
+# The script will look at something called /[Lookup Path]/[mountName]* to start the transfer 
 emailReceivers = ['ltreherne@goldcrestfilms.com']
 #********************************************************
 
@@ -91,7 +92,8 @@ def LTprint(str):
 # ----------------------------- #
 
 def LTsendEmail(subject,message):
-	sender = 'TranscodeResolve'
+	# Needs to be disable as it doesn't work on the dailies iMacs
+	"""sender = 'TranscodeResolve'
 	global emailReceivers
 
 	msg = MIMEMultipart('alternative')
@@ -106,7 +108,7 @@ def LTsendEmail(subject,message):
 	except Exception as e:
 		LTprint('ERROR : sending email')
 	finally:
-		server.quit()
+		server.quit()"""
 
 # ----------------------------- #
 
@@ -158,10 +160,11 @@ def LTcheckArgs( argv ):
 		print("-----------------------------------------------------------------------------------------------------------------------------------------------------------------")
 		print("")
 		print("The Shoot day folder structure needs to be as bellow:")
-		print("> [Project Name]")
-		print("     > [Shoot Day Name]")
+		print("> [Project Name] (i.e AGIM)")
+		print("     > [Shoot Day Name] (i.e BK01_MU001_22230218)")
 		print("          > OCF (Original Camera Files)")
-		print("          	> [Camera] (Original Camera Files organised by Camroll (i.e A131RO25)")
+		print("          	> [Camera] (i.e Alexa35)")
+		print("          	> [Camrolls] (i.e A131RO25)")
 		print("          > OSF (Original Sound Files)")
 		print("          > METADATA")
 		print("")
@@ -229,44 +232,60 @@ def LTisTimelineExist(timelineName ):
 
 def LTisLookupFolderValid(folder):
 	global shootDay
+	global mountName
 	# check if the Lookup folder has a subfolder looking like BK01_MU01_20220517 with a num empyy OCF subfolde
 	# a valid folder structure would be [lookupFolder]/[projectName]/[ShootDate]/OCF
 	mypath=''
 	if not os.path.exists(folder):
 		return 0
 	else:
+		# Check if the Folder is not empty
 		listDir=[os.path.join(LookupPath, o) for o in os.listdir(LookupPath) if (os.path.isdir(os.path.join(LookupPath,o)) and (os.path.basename(o)[0]!='.'))]
 		#print(listDir)
 		if listDir==[]:
 			return 0
 		else:
+			# Check if the mountName exit and is single on the folder
 			if len(listDir)>1:
-				LTprint("ERROR : The Lookup folder has more than one [Project] Folder")
+				LTprint("ERROR : The Lookup folder has more than one mounted drive starting with '"+mountName+"'")
 				return -1
 			else:
-				# go to the project folder
-				mypath=os.path.join(LookupPath,listDir[0])
-				listDir=[os.path.join(mypath, o) for o in os.listdir(mypath) if os.path.isdir(os.path.join(mypath,o))]
-				if len(listDir)>1:
-					LTprint("ERROR : The Project folder has more than one [shootday] Folder")
-					return -1		
+				# check if the folder name match the mountName. If not then wait
+				mount=os.path.basename(listDir[0])
+				if not mount.startswith(mountName):
+					#LTprint("ERROR : The mount name '"+mount+"' seems incorrect. Expecting '"+mountName+"'")
+					return 0
 				else:
-					if not re.search("[a-zA-Z0-9]{4}_[a-zA-Z0-9]{4}_[0-9]{8}$", listDir[0]):
-						LTprint("ERROR : The Shoot Day '"+listDir[0]+"'folder name is not correct. We are expecting something like BK01_MU01_20220517")
+					# Check the mount point
+					mypath=os.path.join(LookupPath,listDir[0])
+					listDir=[os.path.join(mypath, o) for o in os.listdir(mypath) if os.path.isdir(os.path.join(mypath,o))]
+					if len(listDir)>1:
+						LTprint("ERROR : The Lookup folder has more than one [Project] Folder")
 						return -1
 					else:
-						shootDay = os.path.basename(os.path.normpath(listDir[0]))
-						mypath = os.path.join(mypath,listDir[0])
-						listDir = os.listdir(mypath)
-						findOCF = False
-						for dir in listDir:
-							if dir=="OCF":
-								findOCF = True
-								mypath = os.path.join(mypath,dir)
-						if findOCF==True:
-							return mypath
+						# go to the project folder
+						mypath=os.path.join(LookupPath,listDir[0])
+						listDir=[os.path.join(mypath, o) for o in os.listdir(mypath) if os.path.isdir(os.path.join(mypath,o))]
+						if len(listDir)>1:
+							LTprint("ERROR : The Project folder has more than one [shootday] Folder")
+							return -1		
 						else:
-							return -1
+							if not re.search("[a-zA-Z0-9]{4}_[a-zA-Z0-9]{5}_[0-9]{8}$", listDir[0]):
+								LTprint("ERROR : The Shoot Day '"+listDir[0]+"' folder name is not correct. We are expecting something like BK01_MU01_20220517")
+								return -1
+							else:
+								shootDay = os.path.basename(os.path.normpath(listDir[0]))
+								mypath = os.path.join(mypath,listDir[0])
+								listDir = os.listdir(mypath)
+								findOCF = False
+								for dir in listDir:
+									if dir=="OCF":
+										findOCF = True
+										mypath = os.path.join(mypath,dir)
+								if findOCF==True:
+									return mypath
+								else:
+									return -1
 
 
 
@@ -420,8 +439,9 @@ mediastorage=resolve.GetMediaStorage()
 dayfolder=mediapool.GetRootFolder()
 timelinefolder=mediapool.GetRootFolder()
 LTprint("")
-LTprint("INFO  : The Lookup path is defined as     : "+LookupPath)
-LTprint("INFO  : The Transcoded path is defined as : "+TranscodePath)
+LTprint("INFO  : The mounted drive name is expected to start with : "+mountName+"...")
+LTprint("INFO  : The Lookup path is defined as                    : "+LookupPath)
+LTprint("INFO  : The Transcoded path is defined as                : "+TranscodePath)
 LTprint("")
 
 #******************************************************************
@@ -444,7 +464,7 @@ while not filesInLookup:
 
 LTprint("INFO  : Begining Transcoding the folder "+OCFfolder+" for shoot day "+shootDay)
 dayBlock = shootDay[0:4]
-dayUnit = shootDay[5:9]
+dayUnit = shootDay[5:10]
 #******************************************************************
 # create the list of file to process including metadata and media files
 fileList = {}
