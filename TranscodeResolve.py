@@ -25,7 +25,7 @@ import time
 
 
 #********************************************************
-version="1.7"
+version="1.8"
 # The script will look at something called /[Lookup Path]/[mountName]* to start the transfer 
 emailReceivers = ['ltreherne@goldcrestfilms.com']
 #********************************************************
@@ -144,14 +144,15 @@ def LTcheckArgs( argv ):
 		print("Resolve needs to be already running on the database where the predefine project already exist")
 		print("It will automatically create the media bin structure as well as timelines and render transcoded media onto the defined path")
 		print("-----------------------------------------------------------------------------------------------------------------------------------------------------------------")
-		print("PLEASE MAKE SURE THE CREATE THE RESOLVE PROJECT FIRST AND THE RENDER PRESET NAMES 'transcode'")
-		print("THE RENDER PRESET NEENDS TO BE SETUP WITH THE FOLLOWING OPTIONS")
+		print(bcolors.YELLOW+"PLEASE MAKE SURE TO CREATE THE RESOLVE PROJECT FIRST AND THE RENDER PRESET NAMES 'transcode'"+bcolors.ENDC)
+		print(bcolors.YELLOW+"THE RENDER PRESET NEENDS TO BE SETUP WITH THE FOLLOWING OPTIONS"+bcolors.ENDC)
 		print("- Filename : Source name ")
 		print("- Location : The transcoded media folder")
 		print("- Render Individual clips")
 		print("- Render at source resolution")
 		print("- Preserve directory levels set accordingly")
-		print("PLEASE MASKE SURE NO OTHER DRIVE ARE STARTING WITH THE SAME NAME AS THE ONE PASSED AS THE LOOKUP NAME)
+		print(bcolors.YELLOW+"PLEASE MAKE SURE NO OTHER DRIVE ARE STARTING WITH THE SAME NAME AS THE ONE PASSED AS THE LOOKUP NAME"+bcolors.ENDC)
+		print(bcolors.YELLOW+"PLEASE MAKE SURE THE PATH FOR THE TRANSCODED MEDIA IS EMPTY"+bcolors.ENDC)
 		print("-----------------------------------------------------------------------------------------------------------------------------------------------------------------")
 		print("")
 		print("To run the script on Mac for the TranscodeResolve project and '/Volumes/NVME' lookup Path, Rendering in '/Volumes/SPARK/Transcoded'")
@@ -450,6 +451,12 @@ LTprint("")
 
 #******************************************************************
 # loop until new media is available on the lookup folder
+LTprint("INFO  : Checking transcoded path "+TranscodePath+"...")
+listDir=[os.path.join(TranscodePath, o) for o in os.listdir(TranscodePath) if (os.path.isdir(os.path.join(TranscodePath,o)) and (os.path.basename(o)[0]!='.'))]
+if len(listDir) != 0:
+	LTprint("ERROR : The destination path already have a folder...")
+	exit()
+
 starttime = time.time()
 filesInLookup=False
 LTprint("INFO  : Checking lookup folder "+LookupPath+" for files...")
