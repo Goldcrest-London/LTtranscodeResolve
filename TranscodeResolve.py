@@ -20,11 +20,12 @@ import datetime
 import xml.etree.ElementTree as ET
 import time
 import smtplib
+import time
 
 
 
 #********************************************************
-version="1.6"
+version="1.7"
 # The script will look at something called /[Lookup Path]/[mountName]* to start the transfer 
 emailReceivers = ['ltreherne@goldcrestfilms.com']
 #********************************************************
@@ -150,6 +151,7 @@ def LTcheckArgs( argv ):
 		print("- Render Individual clips")
 		print("- Render at source resolution")
 		print("- Preserve directory levels set accordingly")
+		print("PLEASE MASKE SURE NO OTHER DRIVE ARE STARTING WITH THE SAME NAME AS THE ONE PASSED AS THE LOOKUP NAME)
 		print("-----------------------------------------------------------------------------------------------------------------------------------------------------------------")
 		print("")
 		print("To run the script on Mac for the TranscodeResolve project and '/Volumes/NVME' lookup Path, Rendering in '/Volumes/SPARK/Transcoded'")
@@ -231,9 +233,8 @@ def LTisTimelineExist(timelineName ):
 
 # ----------------------------- #
 
-def LTisLookupFolderValid(folder):
+def LTisLookupFolderValid(folder,mountName):
 	global shootDay
-	global mountName
 	# check if the Lookup folder has a subfolder looking like BK01_MU01_20220517 with a num empyy OCF subfolde
 	# a valid folder structure would be [lookupFolder]/[projectName]/[ShootDate]/OCF
 	mypath=''
@@ -241,7 +242,7 @@ def LTisLookupFolderValid(folder):
 		return 0
 	else:
 		# Check if the Folder is not empty
-		listDir=[os.path.join(LookupPath, o) for o in os.listdir(LookupPath) if (os.path.isdir(os.path.join(LookupPath,o)) and (os.path.basename(o)[0]!='.'))]
+		listDir=[os.path.join(folder, o) for o in os.listdir(folder) if (os.path.isdir(os.path.join(folder,o)) and (os.path.basename(o)[0]!='.') and (os.path.basename(o).startswith(mountName)))]
 		#print(listDir)
 		if listDir==[]:
 			return 0
@@ -259,7 +260,8 @@ def LTisLookupFolderValid(folder):
 				else:
 					# Check the mount point
 					mypath=os.path.join(LookupPath,listDir[0])
-					listDir=[os.path.join(mypath, o) for o in os.listdir(mypath) if os.path.isdir(os.path.join(mypath,o))]
+					listDir=[os.path.join(mypath, o) for o in os.listdir(mypath) if (os.path.isdir(os.path.join(mypath,o)) and (os.path.basename(o)[0]!='.'))]
+					print(listDir)
 					if len(listDir)>1:
 						LTprint("ERROR : The Lookup folder has more than one [Project] Folder")
 						return -1
@@ -452,9 +454,13 @@ starttime = time.time()
 filesInLookup=False
 LTprint("INFO  : Checking lookup folder "+LookupPath+" for files...")
 LTprint(bcolors.YELLOW+"       Process will start as soon as the media will be accessible"+bcolors.ENDC)
+LTprint(bcolors.YELLOW+"       Press Ctrl+C to stop the process..."+bcolors.ENDC)
 LTprint("")
+start=time.time()
 while not filesInLookup:
-	ret=LTisLookupFolderValid(LookupPath)
+	end=time.time()
+	print("\r",bcolors.CYAN,int(end-start)," seconds...",bcolors.ENDC,end='')
+	ret=LTisLookupFolderValid(LookupPath,mountName)
 	if ret == -1:
 		exit()
 	else:
